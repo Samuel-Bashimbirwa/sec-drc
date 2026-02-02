@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'pages/acting_map_page.dart';
+
 import '../widgets/acting_action_buttons.dart';
 
 class ActingHomePage extends StatefulWidget {
@@ -47,17 +49,11 @@ class _ActingHomePageState extends State<ActingHomePage> {
     return Stack(
       children: [
         // Carte placeholder (MVP UI)
-        Positioned.fill(
-          child: Container(
-            color: const Color(0xFFF2F4F7),
-            child: const Center(
-              child: Text(
-                'Carte (placeholder)\nNext: flutter_map + markers + zones',
-                textAlign: TextAlign.center,
+        const Positioned.fill(
+          
+          child: ActingMapPage(),
               ),
-            ),
-          ),
-        ),
+            
 
         // Boutons tactiles (overlay)
         Positioned(
