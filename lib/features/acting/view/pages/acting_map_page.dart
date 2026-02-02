@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+
+
 import '../../controller/location_controller.dart';
+import '../../widgets/acting_action_buttons.dart';
+
 
 class ActingMapPage extends StatefulWidget {
   const ActingMapPage({super.key});
@@ -20,6 +24,8 @@ class _ActingMapPageState extends State<ActingMapPage> {
   @override
   void initState() {
     super.initState();
+
+    debugPrint('ActingMapPage mounted');
 
     _loc.addListener(() {
       if (!mounted) return;
@@ -47,7 +53,9 @@ class _ActingMapPageState extends State<ActingMapPage> {
     } else {
       _mapController.move(_kinshasa, 13);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Position indisponible (fallback Kinshasa).")),
+        const SnackBar(
+          content: Text("Position indisponible (fallback Kinshasa)."),
+        ),
       );
     }
   }
@@ -57,9 +65,14 @@ class _ActingMapPageState extends State<ActingMapPage> {
     final state = _loc.state;
     final center = state.position ?? _kinshasa;
 
-    return Stack(
-      children: [
-        FlutterMap(
+
+  return Stack(
+  children: [
+
+  //Carte  
+    Positioned.fill(
+      child: SizedBox.expand(
+        child: FlutterMap(
           mapController: _mapController,
           options: MapOptions(
             initialCenter: center,
@@ -85,45 +98,88 @@ class _ActingMapPageState extends State<ActingMapPage> {
             ),
           ],
         ),
+      ),
+    ),
 
-        // Bouton centrer (tactile)
-        Positioned(
-          right: 12,
-          bottom: 12,
-          child: SafeArea(
-            child: FloatingActionButton(
-              onPressed: _centerOnUser,
-              child: const Icon(Icons.my_location),
+    // Bouton centrer sur utilisateur
+    Positioned(
+      right: 12,
+      bottom: 170, // Au-dessus des boutons d'action
+      child: SafeArea(
+        child: FloatingActionButton(
+          onPressed: _centerOnUser,
+          child: const Icon(Icons.my_location),
+        ),
+      ),
+    ),
+
+    
+    //Overlay état (loading / error)
+    Positioned(
+      left: 12,
+      right: 12,
+      top: 12,
+      child: SafeArea(
+        child: Column(
+          children: [
+            if (state.loading)
+              const _InfoChip(
+                icon: Icons.timelapse,
+                text: 'Récupération localisation…',
+              ),
+            if (state.error != null)
+              _InfoChip(
+                icon: Icons.error_outline,
+                text: state.error!,
+              ),
+          ],
+        ),
+      ),
+    ),
+
+    //Overlay boutons (Tactile / Urgence)
+    Positioned(
+      left: 16,
+      right: 16,
+      bottom: 16,
+      child: SafeArea(
+        child: Card(
+          elevation: 8,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: ActingActionButtons(
+              onSignal: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Signaler (vert)')),
+                );
+              },
+              onHelp: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Demander aide (orange)')),
+                );
+              },
+              onUrgent: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Danger imminent (rouge)')),
+                );
+              },
+              onVigilance: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Point de vigilance')),
+                );
+              },
             ),
           ),
         ),
+      ),
+    ),
+  ],
+);    
 
-        // Overlay état (loading / error)
-        Positioned(
-          left: 12,
-          right: 12,
-          top: 12,
-          child: SafeArea(
-            child: Column(
-              children: [
-                if (state.loading)
-                  const _InfoChip(
-                    icon: Icons.timelapse,
-                    text: 'Récupération localisation…',
-                  ),
-                if (state.error != null)
-                  _InfoChip(
-                    icon: Icons.error_outline,
-                    text: state.error!,
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
+ }   
+
+}  
+
 
 class _InfoChip extends StatelessWidget {
   final IconData icon;
