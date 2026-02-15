@@ -14,15 +14,14 @@ class ActingActionButtons extends StatelessWidget {
     this.onVigilance,
   });
 
-  Widget _bigBtn({
+  Widget _btn({
     required IconData icon,
     required String label,
     required Color color,
     required VoidCallback? onTap,
   }) {
-    return Expanded(
-      child: SizedBox(
-        height: 56,
+    return SizedBox(
+        height: 54,
         child: FilledButton.icon(
           style: FilledButton.styleFrom(backgroundColor: color),
           onPressed: onTap,
@@ -32,8 +31,8 @@ class ActingActionButtons extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w800),
           ),
         ),
-      ),
-    );
+      );
+    
   }
 
   @override
@@ -42,21 +41,21 @@ class ActingActionButtons extends StatelessWidget {
       children: [
         Row(
           children: [
-            _bigBtn(
+            _btn(
               icon: Icons.report_problem_outlined,
               label: 'Signaler',
               color: const Color(0xFF16A34A), // vert
               onTap: onSignal,
             ),
             const SizedBox(width: 10),
-            _bigBtn(
+            _btn(
               icon: Icons.support_agent_outlined,
               label: 'Aide',
               color: const Color(0xFFF59E0B), // orange
               onTap: onHelp,
             ),
             const SizedBox(width: 10),
-            _bigBtn(
+            _btn(
               icon: Icons.warning_amber_outlined,
               label: 'Urgence',
               color: const Color(0xFFDC2626), // rouge
