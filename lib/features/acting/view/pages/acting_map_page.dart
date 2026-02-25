@@ -5,7 +5,7 @@ import 'package:latlong2/latlong.dart';
 
 
 import '../../controller/location_controller.dart';
-import '../../widgets/acting_action_buttons.dart';
+
 
 
 class ActingMapPage extends StatefulWidget {
@@ -104,7 +104,7 @@ class _ActingMapPageState extends State<ActingMapPage> {
     // Bouton centrer sur utilisateur
     Positioned(
       right: 12,
-      bottom: 170, // Au-dessus des boutons d'action
+      bottom: 200, // Au-dessus des boutons d'action
       child: SafeArea(
         child: FloatingActionButton(
           onPressed: _centerOnUser,
@@ -131,55 +131,15 @@ class _ActingMapPageState extends State<ActingMapPage> {
               _InfoChip(
                 icon: Icons.error_outline,
                 text: state.error!,
-              ),
-          ],
+                ),
+              ],
+             ),
+           ),
         ),
-      ),
-    ),
-
-    //Overlay boutons (Tactile / Urgence)
-    Positioned(
-      left: 16,
-      right: 16,
-      bottom: 16,
-      child: SafeArea(
-        child: Card(
-          elevation: 8,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: ActingActionButtons(
-              onSignal: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Signaler (vert)')),
-                );
-              },
-              onHelp: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Demander aide (orange)')),
-                );
-              },
-              onUrgent: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Danger imminent (rouge)')),
-                );
-              },
-              onVigilance: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Point de vigilance')),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    ),
-  ],
-);    
-
- }   
-
-}  
-
+      ]
+    );  
+  }
+}
 
 class _InfoChip extends StatelessWidget {
   final IconData icon;

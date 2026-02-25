@@ -45,35 +45,53 @@ class _ActingHomePageState extends State<ActingHomePage> {
     );
   }
 
-  Widget _buildMapBody() {
+Widget _buildMapBody() {
     return Stack(
       children: [
-        // Carte placeholder (MVP UI)
-        const Positioned.fill(
-          
-          child: ActingMapPage(),
-              ),
-            
+        // Carte réelle (pas placeholder)
+        const ActingMapPage(),
 
-        // Boutons tactiles (overlay)
+        // Bouton urgence toujours visible
         Positioned(
-          left: 16,
-          right: 16,
-          bottom: 16,
-          child: SafeArea(
-            child: Card(
-              elevation: 6,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: ActingActionButtons(
-                  onSignal: () => _toast('Signaler (vert)'),
-                  onHelp: () => _toast('Demander aide (orange)'),
-                  onUrgent: () => _toast('Danger imminent (rouge)'),
-                  onVigilance: () => _toast('Point de vigilance'),
+          right: 12,
+          bottom: 120,
+          child: FloatingActionButton(
+            backgroundColor: Colors.red,
+            onPressed: () => _toast("URGENCE déclenchée"),
+            child: const Icon(Icons.warning),
+          ),
+        ),
+
+        // Panneau repliable
+        DraggableScrollableSheet(
+          initialChildSize: 0.12,
+          minChildSize: 0.12,
+          maxChildSize: 0.35,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                boxShadow: [
+                  BoxShadow(
+                    blurRadius: 10,
+                    color: Colors.black26,
+                  )
+                ],
+              ),
+              child: SingleChildScrollView(
+                controller: scrollController,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: ActingActionButtons(
+                    onSignal: () => _toast('Signaler'),
+                    onHelp: () => _toast('Demander aide'),
+                    onVigilance: () => _toast('Point de vigilance'),
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ],
     );
@@ -107,6 +125,8 @@ class _ActingHomePageState extends State<ActingHomePage> {
       ),
     );
   }
+
+
 
   Widget _buildBody() {
     return switch (_tab) {
