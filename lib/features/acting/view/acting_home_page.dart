@@ -45,48 +45,69 @@ class _ActingHomePageState extends State<ActingHomePage> {
     );
   }
 
-Widget _buildMapBody() {
+  Widget _buildMapBody() {
     return Stack(
       children: [
-        // Carte réelle (pas placeholder)
+        // ✅ Carte réelle
         const ActingMapPage(),
 
-        // Bouton urgence toujours visible
+        // ✅ FAB urgence (au-dessus du panneau draggable)
         Positioned(
           right: 12,
-          bottom: 120,
-          child: FloatingActionButton(
-            backgroundColor: Colors.red,
-            onPressed: () => _toast("URGENCE déclenchée"),
-            child: const Icon(Icons.warning),
+          bottom: 140, // (un peu plus haut pour éviter recouvrement)
+          child: SafeArea(
+            child: FloatingActionButton(
+              backgroundColor: Colors.red,
+              onPressed: () => _toast("URGENCE déclenchée"),
+              child: const Icon(Icons.warning),
+            ),
           ),
         ),
 
-        // Panneau repliable
+        // ✅ Panneau repliable
         DraggableScrollableSheet(
           initialChildSize: 0.12,
           minChildSize: 0.12,
           maxChildSize: 0.35,
           builder: (context, scrollController) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 10,
-                    color: Colors.black26,
-                  )
-                ],
-              ),
-              child: SingleChildScrollView(
-                controller: scrollController,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: ActingActionButtons(
-                    onSignal: () => _toast('Signaler'),
-                    onHelp: () => _toast('Demander aide'),
-                    onVigilance: () => _toast('Point de vigilance'),
+            return SafeArea(
+              top: false,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 10,
+                      color: Colors.black26,
+                    )
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+                    child: Column(
+                      children: [
+                        // ✅ petit handle (UX)
+                        Container(
+                          width: 46,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Colors.black12,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // ✅ Boutons (Signaler / Aide / Vigilance)
+                        ActingActionButtons(
+                          onSignal: () => _toast('Signaler'),
+                          onHelp: () => _toast('Demander aide'),
+                          onVigilance: () => _toast('Point de vigilance'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -125,8 +146,6 @@ Widget _buildMapBody() {
       ),
     );
   }
-
-
 
   Widget _buildBody() {
     return switch (_tab) {

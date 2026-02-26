@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-
-
+import 'package:get/get.dart';
 
 import '../../controller/location_controller.dart';
-
-
+import '../../controller/alert_controller.dart';
 
 class ActingMapPage extends StatefulWidget {
   const ActingMapPage({super.key});
@@ -16,14 +14,19 @@ class ActingMapPage extends StatefulWidget {
 }
 
 class _ActingMapPageState extends State<ActingMapPage> {
-  final _mapController = MapController();
-  final _loc = LocationController();
+  late final AlertController _alert;
+
+  final MapController _mapController = MapController();
+  final LocationController _loc = LocationController();
 
   static const LatLng _kinshasa = LatLng(-4.4419, 15.2663);
 
   @override
   void initState() {
     super.initState();
+
+    // ✅ GetX: récupère le controller déjà enregistré dans tes bindings
+    _alert = Get.find<AlertController>();
 
     debugPrint('ActingMapPage mounted');
 
@@ -65,79 +68,77 @@ class _ActingMapPageState extends State<ActingMapPage> {
     final state = _loc.state;
     final center = state.position ?? _kinshasa;
 
-
-  return Stack(
-  children: [
-
-  //Carte  
-    Positioned.fill(
-      child: SizedBox.expand(
-        child: FlutterMap(
-          mapController: _mapController,
-          options: MapOptions(
-            initialCenter: center,
-            initialZoom: state.position == null ? 13 : 16,
-            minZoom: 3,
-            maxZoom: 19,
-          ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.secdrc.actingmode',
+    return Stack(
+      children: [
+        // ✅ Carte
+        Positioned.fill(
+          child: SizedBox.expand(
+            child: FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: center,
+                initialZoom: state.position == null ? 13 : 16,
+                minZoom: 3,
+                maxZoom: 19,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.secdrc.actingmode',
+                ),
+                MarkerLayer(
+                  markers: [
+                    if (state.position != null)
+                      Marker(
+                        point: state.position!,
+                        width: 42,
+                        height: 42,
+                        child: const Icon(Icons.my_location, size: 34),
+                      ),
+                  ],
+                ),
+              ],
             ),
-            MarkerLayer(
-              markers: [
-                if (state.position != null)
-                  Marker(
-                    point: state.position!,
-                    width: 42,
-                    height: 42,
-                    child: const Icon(Icons.my_location, size: 34),
+          ),
+        ),
+
+        // ✅ Bouton centrer sur utilisateur (ne pas confondre avec FAB urgence, qui est dans ActingHomePage)
+        Positioned(
+          right: 12,
+          bottom: 12,
+          child: SafeArea(
+            child: FloatingActionButton(
+              heroTag: 'fab_center_user', // ✅ évite conflits si d’autres FAB existent
+              onPressed: _centerOnUser,
+              child: const Icon(Icons.my_location),
+            ),
+          ),
+        ),
+
+        // ✅ Overlay état (loading / error)
+        Positioned(
+          left: 12,
+          right: 12,
+          top: 12,
+          child: SafeArea(
+            child: Column(
+              children: [
+                if (state.loading)
+                  const _InfoChip(
+                    icon: Icons.timelapse,
+                    text: 'Récupération localisation…',
+                  ),
+                if (state.error != null)
+                  _InfoChip(
+                    icon: Icons.error_outline,
+                    text: state.error!,
                   ),
               ],
             ),
-          ],
+          ),
         ),
-      ),
-    ),
-
-    // Bouton centrer sur utilisateur
-    Positioned(
-      right: 12,
-      bottom: 200, // Au-dessus des boutons d'action
-      child: SafeArea(
-        child: FloatingActionButton(
-          onPressed: _centerOnUser,
-          child: const Icon(Icons.my_location),
-        ),
-      ),
-    ),
-
-    
-    //Overlay état (loading / error)
-    Positioned(
-      left: 12,
-      right: 12,
-      top: 12,
-      child: SafeArea(
-        child: Column(
-          children: [
-            if (state.loading)
-              const _InfoChip(
-                icon: Icons.timelapse,
-                text: 'Récupération localisation…',
-              ),
-            if (state.error != null)
-              _InfoChip(
-                icon: Icons.error_outline,
-                text: state.error!,
-                ),
-              ],
-             ),
-           ),
-        ),
-      ]
-    );  
+      ],
+    );
   }
 }
 
