@@ -16,15 +16,21 @@ class LocationState {
         position = null,
         error = null;
 
+  // ✅ copyWith "pro" :
+  // - si tu ne passes pas error => il reste inchangé
+  // - si tu passes error: "msg" => il devient "msg"
+  // - si tu passes error: null => il s'efface
   LocationState copyWith({
     bool? loading,
     LatLng? position,
-    String? error,
+    Object? error = _noChange,
   }) {
     return LocationState(
       loading: loading ?? this.loading,
       position: position ?? this.position,
-      error: error,
+      error: identical(error, _noChange) ? this.error : error as String?,
     );
   }
+
+  static const _noChange = Object();
 }

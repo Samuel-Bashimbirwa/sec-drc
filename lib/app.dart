@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
-import 'core/theme/app_theme.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'SEC-DRC',
-      theme: AppTheme.light(),
-      initialRoute: AppRoutes.auth,
-      routes: AppRoutes.routes,
       debugShowCheckedModeBanner: false,
+      initialRoute: AppRoutes.root,
+      getPages: AppPages.pages,
     );
   }
 }

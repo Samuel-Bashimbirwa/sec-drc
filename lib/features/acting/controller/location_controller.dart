@@ -50,7 +50,8 @@ class LocationController extends ChangeNotifier {
       if (permission == LocationPermission.deniedForever) {
         state = state.copyWith(
           loading: false,
-          error: "Permission refusée définitivement. Active-la dans les paramètres.",
+          error:
+              "Permission refusée définitivement. Active-la dans les paramètres.",
         );
         notifyListeners();
         return;
