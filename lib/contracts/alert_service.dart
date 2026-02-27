@@ -5,10 +5,7 @@ abstract class AlertService {
   Future<AlertModel> createAlert({
     required AlertType type,
     required LatLng position,
-    String? city,
-    String? commune,
-    String? quartier,
-    String? avenue,
+    double radiusMeters,
   });
 
   Future<List<AlertModel>> listAlerts();

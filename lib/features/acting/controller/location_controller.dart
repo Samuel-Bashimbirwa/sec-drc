@@ -1,26 +1,38 @@
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../model/location_state.dart';
 
-class LocationController extends ChangeNotifier {
+class LocationController extends GetxController {
   LocationState state = const LocationState.initial();
 
+  bool _started = false;
+  bool _loadingNow = false;
+
+  /// Appel safe : tu peux l'appeler depuis Home et Map sans casser.
   Future<void> init() async {
-    // Pour éviter bugs sur Flutter Web, on ne lance pas le GPS.
+    if (_loadingNow) return;
+
+    // Empêche de relancer 20 fois (mais autorise un "re-try" si erreur)
+    if (_started && state.position != null) return;
+    _started = true;
+
+    // Web fallback
     if (kIsWeb) {
       state = state.copyWith(
         loading: false,
-        position: const LatLng(-4.4419, 15.2663), // Kinshasa fallback
+        position: const LatLng(-4.4419, 15.2663),
         error: 'Localisation non supportée (web).',
       );
-      notifyListeners();
+      update(); // ✅ GetX refresh
       return;
     }
 
+    _loadingNow = true;
     state = state.copyWith(loading: true, error: null);
-    notifyListeners();
+    update();
 
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -29,7 +41,8 @@ class LocationController extends ChangeNotifier {
           loading: false,
           error: "Le service de localisation est désactivé.",
         );
-        notifyListeners();
+        update();
+        _loadingNow = false;
         return;
       }
 
@@ -43,7 +56,8 @@ class LocationController extends ChangeNotifier {
           loading: false,
           error: "Permission localisation refusée.",
         );
-        notifyListeners();
+        update();
+        _loadingNow = false;
         return;
       }
 
@@ -53,7 +67,8 @@ class LocationController extends ChangeNotifier {
           error:
               "Permission refusée définitivement. Active-la dans les paramètres.",
         );
-        notifyListeners();
+        update();
+        _loadingNow = false;
         return;
       }
 
@@ -66,13 +81,15 @@ class LocationController extends ChangeNotifier {
         position: LatLng(pos.latitude, pos.longitude),
         error: null,
       );
-      notifyListeners();
+      update();
     } catch (e) {
       state = state.copyWith(
         loading: false,
         error: "Erreur localisation: $e",
       );
-      notifyListeners();
+      update();
+    } finally {
+      _loadingNow = false;
     }
   }
 }

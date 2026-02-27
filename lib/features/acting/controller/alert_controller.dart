@@ -9,46 +9,78 @@ class AlertController extends GetxController {
 
   AlertController(this._service);
 
-  final alerts = <AlertModel>[].obs;
-  final loading = false.obs;
-  final error = RxnString();
+  // ==============================
+  // STATE
+  // ==============================
 
-  Future<void> refresh() async {
+  final RxList<AlertModel> alerts = <AlertModel>[].obs;
+  final RxBool loading = false.obs;
+  final RxnString error = RxnString();
+
+  // ==============================
+  // REFRESH ALERTS
+  // ==============================
+
+  Future<void> refreshAlerts() async {
+    if (loading.value) return;
+
     try {
       loading.value = true;
       error.value = null;
-      final data = await _service.listAlerts();
-      alerts.assignAll(data);
+
+      final items = await _service.listAlerts();
+      alerts.assignAll(items);
     } catch (e) {
-      error.value = 'Erreur chargement alertes: $e';
+      error.value = "Erreur lors du chargement des alertes";
     } finally {
       loading.value = false;
     }
   }
 
+  // ==============================
+  // CREATE ALERT
+  // ==============================
+
   Future<AlertModel?> createAlert({
     required AlertType type,
     required LatLng position,
-    String? city,
-    String? commune,
-    String? quartier,
-    String? avenue,
+    double radiusMeters = 120,
   }) async {
     try {
+      loading.value = true;
       error.value = null;
+
       final created = await _service.createAlert(
         type: type,
         position: position,
-        city: city,
-        commune: commune,
-        quartier: quartier,
-        avenue: avenue,
+        radiusMeters: radiusMeters,
       );
+
+      // insertion immédiate en haut
       alerts.insert(0, created);
+
       return created;
     } catch (e) {
-      error.value = 'Erreur création alerte: $e';
+      error.value = "Erreur lors de la création de l'alerte";
       return null;
+    } finally {
+      loading.value = false;
     }
+  }
+
+  // ==============================
+  // REMOVE ALERT (local only)
+  // ==============================
+
+  void removeAlert(AlertModel alert) {
+    alerts.remove(alert);
+  }
+
+  // ==============================
+  // CLEAR
+  // ==============================
+
+  void clear() {
+    alerts.clear();
   }
 }
