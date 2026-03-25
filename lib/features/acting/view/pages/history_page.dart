@@ -20,7 +20,7 @@ class _HistoryPageState extends State<HistoryPage> {
     super.initState();
 
     if (c.alerts.isEmpty && !c.loading.value) {
-      c.refresh();
+      c.refreshAlerts();
     }
   }
 
@@ -83,7 +83,7 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
             child: ListTile(
               leading: CircleAvatar(
-                backgroundColor: _color(a.type).withOpacity(0.15),
+                backgroundColor: _color(a.type).withValues(alpha: 0.15),
                 child: Icon(
                   _icon(a.type),
                   color: _color(a.type),

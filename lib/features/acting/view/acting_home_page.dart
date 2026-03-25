@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'pages/acting_map_page.dart';
+import 'pages/account_page.dart';
+import 'pages/my_location_page.dart';
+import 'pages/history_page.dart';
 import '../controller/alert_controller.dart';
 import '../controller/location_controller.dart';
 import '../model/alert_model.dart';
@@ -19,8 +22,6 @@ class _ActingHomePageState extends State<ActingHomePage> {
   int _tab = 0;
   late final AlertController _alert;
   late final LocationController _loc;
-
-  static const LatLng _kinshasa = LatLng(-4.4419, 15.2663);
 
   @override
   void initState() {
@@ -51,7 +52,7 @@ class _ActingHomePageState extends State<ActingHomePage> {
       return;
     }
 
-    _alert.createAlert(type: AlertType.help, position: pos);
+    _alert.createAlert(type: type, position: pos);
     if (okMsg != null) _toast(okMsg);
   }
 
@@ -63,19 +64,28 @@ class _ActingHomePageState extends State<ActingHomePage> {
         _ => 'Paramètres',
       };
 
-  bool get _isMapTab => _tab == 0;
+  bool get _showSearch => _tab == 0 || _tab == 1;
 
   PreferredSizeWidget? _buildSearchBar() {
-    if (!_isMapTab) return null;
+    if (!_showSearch) return null;
+
+    String hint = _tab == 0 
+        ? 'Rechercher une zone / avenue / repère…'
+        : 'Rechercher Communes / Quartiers / Avenues…';
 
     return PreferredSize(
       preferredSize: const Size.fromHeight(56),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         child: SearchBar(
-          hintText: 'Rechercher une zone / avenue / repère…',
+          hintText: hint,
           leading: const Icon(Icons.search),
-          onSubmitted: (v) => _toast('Recherche: $v'),
+          onSubmitted: (v) {
+            _loc.search(v);
+            if (_tab != 1) {
+              setState(() => _tab = 1); // Switch to location tab to see results
+            }
+          },
         ),
       ),
     );
@@ -194,78 +204,9 @@ class _ActingHomePageState extends State<ActingHomePage> {
   Widget _buildBody() {
     return switch (_tab) {
       0 => _buildMapBody(),
-      1 => _buildPlaceholderPage(
-          icon: Icons.my_location_outlined,
-          title: 'Ma localisation',
-          subtitle: 'MVP: permission GPS + coordonnées + état précision.',
-        ),
-      2 => Obx(() {
-    final alerts = _alert.alerts;
-
-    if (alerts.isEmpty) {
-      return _buildPlaceholderPage(
-        icon: Icons.history_outlined,
-        title: 'Historique',
-        subtitle: 'Aucune alerte pour le moment.',
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: alerts.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final a = alerts[index];
-
-        IconData icon;
-        Color color;
-
-        switch (a.type) {
-          case AlertType.urgent:
-            icon = Icons.warning;
-            color = Colors.red;
-            break;
-          case AlertType.help:
-            icon = Icons.volunteer_activism;
-            color = Colors.orange;
-            break;
-          case AlertType.vigilance:
-            icon = Icons.visibility;
-            color = Colors.blue;
-            break;
-          case AlertType.signal:
-            icon = Icons.report;
-            color = Colors.green;
-            break;
-        }
-
-        return Card(
-          elevation: 4,
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: color.withOpacity(0.15),
-              child: Icon(icon, color: color),
-            ),
-            title: Text(
-              a.type.name.toUpperCase(),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              "${a.position.latitude.toStringAsFixed(4)}, "
-              "${a.position.longitude.toStringAsFixed(4)}\n"
-              "${a.createdAt.toLocal()}",
-            ),
-            isThreeLine: true,
-          ),
-        );
-      },
-    );
-  }),
-      3 => _buildPlaceholderPage(
-          icon: Icons.account_circle_outlined,
-          title: 'Compte',
-          subtitle: 'MVP: alias, titre, informations du compte.',
-        ),
+      1 => const MyLocationPage(),
+      2 => const HistoryPage(),
+      3 => const AccountPage(),
       _ => _buildPlaceholderPage(
           icon: Icons.settings_outlined,
           title: 'Paramètres',

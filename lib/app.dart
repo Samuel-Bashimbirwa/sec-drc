@@ -12,7 +12,7 @@ class App extends StatelessWidget {
     return GetMaterialApp(
       title: 'SEC-DRC',
       debugShowCheckedModeBanner: false,
-      initialRoute: AppRoutes.root,
+      initialRoute: AppRoutes.splash,
       getPages: AppPages.pages,
     );
   }

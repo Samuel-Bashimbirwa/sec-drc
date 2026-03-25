@@ -9,4 +9,10 @@ abstract class AlertService {
   });
 
   Future<List<AlertModel>> listAlerts();
+  
+  Future<List<AlertModel>> listNearAlerts({
+    required LatLng position,
+    double radiusMeters = 5000,
+    bool onlyUrgent = false,
+  });
 }

@@ -1,8 +1,10 @@
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../common/storage_service.dart';
 import '../../../contracts/alert_service.dart';
 import '../model/alert_model.dart';
+import 'location_controller.dart';
 
 class AlertController extends GetxController {
   final AlertService _service;
@@ -28,7 +30,29 @@ class AlertController extends GetxController {
       loading.value = true;
       error.value = null;
 
-      final items = await _service.listAlerts();
+      final storage = Get.find<StorageService>();
+      final loc = Get.find<LocationController>();
+      final role = storage.user?.role ?? 'USER';
+      final pos = loc.state.position;
+
+      List<AlertModel> items = [];
+
+      if (role == 'USER') {
+        if (pos != null) {
+          items = await _service.listNearAlerts(
+            position: pos, 
+            onlyUrgent: true
+          );
+        } else {
+          // Si on n'a pas la position d'un USER, on ne peut rien afficher de pertinent
+          items = [];
+          error.value = "Attente de la position GPS...";
+        }
+      } else {
+        // ADMIN / SUPERVISOR
+        items = await _service.listAlerts();
+      }
+
       alerts.assignAll(items);
     } catch (e) {
       error.value = "Erreur lors du chargement des alertes";

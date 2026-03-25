@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../routes/app_routes.dart';
+import 'package:get/get.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../controller/auth_controller.dart';
 
@@ -11,40 +11,70 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
-  final _controller = AuthController();
-  final _aliasCtrl = TextEditingController();
-  final _titleCtrl = TextEditingController();
+  final AuthController _controller = Get.find<AuthController>();
 
-  String _role = 'acteur';
-  bool _loading = false;
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  final _firstNameCtrl = TextEditingController();
+  final _lastNameCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
+
+  DateTime? _birthDate;
+  bool _isLogin = true;
+  String _role = 'USER'; // USER, SUPERVISOR
 
   @override
   void dispose() {
-    _aliasCtrl.dispose();
-    _titleCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    _firstNameCtrl.dispose();
+    _lastNameCtrl.dispose();
+    _addressCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _continue() async {
-    setState(() => _loading = true);
-    try {
-      final user = await _controller.startSession(
-        alias: _aliasCtrl.text.trim(),
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: now,
+    );
+    if (picked != null) {
+      setState(() => _birthDate = picked);
+    }
+  }
+
+  void _submit() {
+    FocusScope.of(context).unfocus();
+
+    final email = _emailCtrl.text.trim();
+    final pass = _passCtrl.text;
+
+    if (email.isEmpty || pass.length < 6) {
+      Get.snackbar(
+        'Erreur',
+        'Email invalide ou mot de passe trop court.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withValues(alpha: 0.8),
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (_isLogin) {
+      _controller.login(email, pass);
+    } else {
+      _controller.register(
+        email: email,
+        password: pass,
         role: _role,
-        title: _titleCtrl.text.trim(),
+        firstName: _firstNameCtrl.text.trim(),
+        lastName: _lastNameCtrl.text.trim(),
+        address: _addressCtrl.text.trim(),
+        birthDate: _birthDate?.toIso8601String().split('T')[0], // YYYY-MM-DD
       );
-
-      // MVP: on route Acteur vers Acting Home.
-      // Plus tard: role superviseur ira vers Monitoring (web).
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Session: ${user.alias} • ${user.title}')),
-      );
-
-      Navigator.pushReplacementNamed(context, AppRoutes.actingHome);
-    } finally {
-      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -52,56 +82,129 @@ class _AuthPageState extends State<AuthPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('SEC-DRC • Accès')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Démarrer une session (portable)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 12),
-            const Text('Pas de mot de passe pour le MVP.'),
-            const SizedBox(height: 16),
+      body: Obx(() {
+        if (_controller.loading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'acteur', label: Text('Acteur')),
-                ButtonSegment(value: 'superviseur', label: Text('Superviseur')),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                _isLogin ? 'Connexion' : 'Inscription',
+                style:
+                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 24),
+              if (!_isLogin) ...[
+                const Text('Choisir un rôle :'),
+                const SizedBox(height: 8),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'USER', label: Text('Acteur')),
+                    ButtonSegment(
+                        value: 'SUPERVISOR', label: Text('Superviseur')),
+                  ],
+                  selected: {_role},
+                  onSelectionChanged: (s) => setState(() => _role = s.first),
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: _firstNameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Prénom',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _lastNameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _addressCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Adresse de référence',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.home_outlined),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: _pickDate,
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Date de naissance',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.cake_outlined),
+                    ),
+                    child: Text(
+                      _birthDate == null
+                          ? 'Choisir une date'
+                          : '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
               ],
-              selected: {_role},
-              onSelectionChanged: (s) => setState(() => _role = s.first),
-            ),
-
-            const SizedBox(height: 16),
-            TextField(
-              controller: _aliasCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Nom / Alias (optionnel)',
-                border: OutlineInputBorder(),
+              TextField(
+                controller: _emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.email),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _titleCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Titre (optionnel)',
-                hintText: 'Ex: Acteur terrain',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _passCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Mot de passe (6 car. min)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.lock),
+                ),
               ),
-            ),
-
-            const Spacer(),
-            PrimaryButton(
-              label: _loading ? 'Chargement…' : 'Continuer',
-              icon: Icons.arrow_forward,
-              onPressed: _loading ? null : _continue,
-            ),
-          ],
-        ),
-      ),
+              if (_controller.error.value != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  _controller.error.value!,
+                  style: const TextStyle(
+                      color: Colors.red, fontWeight: FontWeight.bold),
+                ),
+              ],
+              const SizedBox(height: 32),
+              PrimaryButton(
+                label: _isLogin ? 'Se connecter' : 'Créer un compte',
+                icon: Icons.arrow_forward,
+                onPressed: _submit,
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isLogin = !_isLogin;
+                    _controller.error.value = null;
+                  });
+                },
+                child: Text(_isLogin
+                    ? "Pas de compte ? S'inscrire"
+                    : "Déjà un compte ? Se connecter"),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      }),
     );
   }
 }
-

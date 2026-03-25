@@ -122,7 +122,7 @@ Widget build(BuildContext context) {
                       point: a.position,
                       radius: 100,
                       useRadiusInMeter: true,
-                      color: color.withOpacity(0.15),
+                      color: color.withValues(alpha: 0.15),
                       borderColor: color,
                       borderStrokeWidth: 2,
                     );

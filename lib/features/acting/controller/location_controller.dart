@@ -11,7 +11,10 @@ class LocationController extends GetxController {
   bool _started = false;
   bool _loadingNow = false;
 
-  /// Appel safe : tu peux l'appeler depuis Home et Map sans casser.
+  final RxList<String> searchResults = <String>[].obs;
+  final RxnString currentZone = RxnString('Recherche de zone...');
+
+  /// Appel safe : tu peux l''appeler depuis Home et Map sans casser.
   Future<void> init() async {
     if (_loadingNow) return;
 
@@ -73,7 +76,10 @@ class LocationController extends GetxController {
       }
 
       final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10,
+        ),
       );
 
       state = state.copyWith(
@@ -91,5 +97,45 @@ class LocationController extends GetxController {
     } finally {
       _loadingNow = false;
     }
+  }
+
+  void search(String query) {
+    if (query.isEmpty) {
+      searchResults.clear();
+      update();
+      return;
+    }
+
+    // Simulation de données pour Kinshasa
+    final mockData = [
+      'Gombe',
+      'Lingwala',
+      'Kintambo',
+      'Ngaliema',
+      'Bandalungwa',
+      'Limete',
+      'Matete',
+      'Ndjili',
+      'Masina',
+      'Kimbanseke',
+      'Avenue de la Justice',
+      'Avenue du 24 Novembre',
+      'Boulevard du 30 Juin',
+      'Quartier Joli Parc',
+      'Quartier Macampagne',
+      'Avenue Colonel Mondjiba',
+      'Quartier GB',
+      'Commune de Lemba',
+    ];
+
+    searchResults.assignAll(mockData
+        .where((element) =>
+            element.toLowerCase().contains(query.toLowerCase()))
+        .toList());
+
+    if (searchResults.isNotEmpty) {
+      currentZone.value = searchResults.first;
+    }
+    update();
   }
 }
